@@ -274,15 +274,16 @@ elseif ($claudeCli) {
     }
 }
 
-if (-not $SoloVerificar -and -not $claudeCli) {
-    $cfgCode = Join-Path $env:USERPROFILE '.claude.json'
+$cfgCode = Join-Path $env:USERPROFILE '.claude.json'
+
+if (-not $SoloVerificar -and -not $claudeCli -and -not (Test-Path $cfgCode)) {
+    # el alumno no usa Claude Code: no tiene sentido crearle el archivo
+    Write-Paso 'Claude Code no esta instalado en este equipo. Se omite (se usara Claude Desktop).'
+}
+elseif (-not $SoloVerificar -and -not $claudeCli) {
     try {
-        if (Test-Path $cfgCode) {
-            Copy-Item $cfgCode "$cfgCode.bak-revitmcp" -Force
-            $j = Get-Content $cfgCode -Raw -Encoding UTF8 | ConvertFrom-Json
-        } else {
-            $j = New-Object PSObject
-        }
+        Copy-Item $cfgCode "$cfgCode.bak-revitmcp" -Force
+        $j = Get-Content $cfgCode -Raw -Encoding UTF8 | ConvertFrom-Json
         if (-not $j.PSObject.Properties['mcpServers']) {
             $j | Add-Member -MemberType NoteProperty -Name mcpServers -Value (New-Object PSObject)
         }
