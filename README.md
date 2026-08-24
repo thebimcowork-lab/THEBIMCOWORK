@@ -17,7 +17,7 @@ Claude  ──stdio──►  Servidor MCP (Node)  ──WebSocket──►  Add
 |---|---|---|
 | Add-in de Revit | Plugin C# que ejecuta las órdenes dentro de Revit | `%AppData%\Autodesk\Revit\Addins\<año>\` |
 | Node.js 18+ | Motor del servidor MCP | instalado por winget si falta |
-| Servidor MCP | `mcp-server-for-revit` vía `npx` | caché de npm |
+| Servidor MCP | `mcp-server-for-revit` (instalación npm local) | `%LocalAppData%\revit-mcp-server\` |
 | Registro en Claude | Claude Code y/o Claude Desktop | `.claude.json` / `claude_desktop_config.json` |
 
 ---
@@ -100,7 +100,7 @@ Trae dos skills:
 |---|---|---|
 | No aparecen las herramientas de Revit | Claude no se reinició | Cierra y abre Claude por completo |
 | Timeout / "connection refused" | Revit cerrado, sin proyecto, o comandos sin activar | Abre Revit con un modelo y revisa **Settings → Save** |
-| `cannot find module` | Node ausente o < 18 | `node -v`; si falta: `winget install OpenJS.NodeJS.LTS` |
+| `cannot find module` | Servidor local borrado o Node reinstalado en otra ruta | Vuelve a correr el instalador |
 | No hay pestaña del add-in en Revit | El `.addin` quedó en la carpeta de otro año | Revisa `%AppData%\Autodesk\Revit\Addins\<año>\` |
 | Revit bloquea el complemento | Estaba abierto al instalar | Ciérralo, reinstala y elige **Siempre cargar** |
 

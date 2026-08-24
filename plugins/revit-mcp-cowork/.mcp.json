@@ -3,7 +3,11 @@
     "revit-mcp": {
       "type": "stdio",
       "command": "cmd",
-      "args": ["/c", "npx", "-y", "mcp-server-for-revit"]
+      "args": [
+        "/c",
+        "node",
+        "%LOCALAPPDATA%\\revit-mcp-server\\node_modules\\mcp-server-for-revit\\build\\index.js"
+      ]
     }
   }
 }

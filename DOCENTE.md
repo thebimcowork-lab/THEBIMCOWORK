@@ -70,3 +70,30 @@ que funciona en cualquier equipo sin instalación global de npm.
 
 Nota: en este equipo (`THE BIM CO-WORK`) el add-in **no** está instalado y **no** hay Node.
 Solo hay Revit 2023. Si vas a demostrar en vivo desde aquí, corre el instalador antes.
+
+---
+
+## 6. Validado en pruebas reales (24-ago-2026, este equipo)
+
+Instalación completa ejecutada de verdad sobre Revit 2023 + 2025 con Windows 11:
+
+- Add-in descargado (9,4 / 19,4 MB) y extraído correcto en `%AppData%\Autodesk\Revit\Addins\{2023,2025}`.
+- Node 24.19 instalado por winget.
+- Servidor instalado en `%LocalAppData%\revit-mcp-server\` y verificado: handshake MCP
+  completo con **26 tools** listadas, lanzado por el mismo comando que usa Claude Desktop.
+
+Bugs reales encontrados y corregidos gracias a la prueba (no repetirlos):
+
+1. **npx directo muere con Node 24**: el paquete fija `better-sqlite3` 11.x, sin binario para
+   Node 24 → intenta compilar → exige Visual Studio. Por eso el instalador monta una
+   instalación npm local con `overrides: better-sqlite3 ^12.4.0` (trae binarios 20/22/24)
+   y registra en Claude la ruta absoluta de `node.exe` + `build/index.js`.
+2. **BOM**: `Set-Content -Encoding UTF8` en PS 5.1 escribe BOM y `JSON.parse` de Node lo
+   rechaza. Las configs se escriben con `UTF8Encoding($false)`.
+3. **El ZIP v1.0.0 trae dos `.addin` idénticos** (`mcp-servers-for-revit.addin` y
+   `revit-mcp.addin`); el instalador borra el duplicado.
+4. En PS 5.1, `2>&1` sobre npm convierte warnings en excepciones: la redirección se hace
+   dentro de `cmd`.
+
+Falta por validar solo el eslabón visual: abrir Revit → Siempre cargar → Settings → Save →
+`say_hello` desde Claude. Eso requiere ojos en pantalla.

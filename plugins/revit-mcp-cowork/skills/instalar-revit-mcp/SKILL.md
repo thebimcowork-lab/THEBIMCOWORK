@@ -63,7 +63,8 @@ Diagnostica de abajo hacia arriba, que es el orden en que se rompe en la practic
 |---|---|---|
 | No existe ninguna tool `mcp__revit-mcp__*` | el servidor no esta registrado, o Claude no se reinicio | correr el instalador y reiniciar Claude |
 | Las tools existen pero dan **timeout** o "connection refused" | Revit cerrado, sin proyecto, o comandos sin activar en Settings | pedir al usuario que abra Revit con un modelo y revise Settings > Save |
-| Error `cannot find module` / npx falla | Node ausente o version < 18 | `node -v`; si falta, `winget install OpenJS.NodeJS.LTS` |
+| Error `cannot find module` | falta la instalacion local en `%LocalAppData%\revit-mcp-server\` o Node cambio de ruta | volver a correr el instalador |
+| npm intenta compilar better-sqlite3 y falla pidiendo Visual Studio | se instalo el paquete sin el override (npx directo con Node 24) | usar SIEMPRE el instalador, que fija better-sqlite3 12.x con binarios |
 | Revit no muestra la pestana del add-in | el `.addin` quedo en la carpeta de otra version de Revit | verificar `%AppData%\Autodesk\Revit\Addins\<anio>\` para el anio correcto |
 | El add-in aparece pero Revit lo bloquea | Revit estaba abierto durante la copia, o el complemento quedo sin autorizar | cerrar Revit, reinstalar, y elegir **Siempre cargar** al abrir |
 | Una tool concreta falla y el resto funciona | ese comando no esta habilitado en Settings | activarlo en el panel Settings del add-in |

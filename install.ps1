@@ -195,6 +195,13 @@ foreach ($anio in $aniosObjetivo) {
         New-Item -ItemType Directory -Path $destino -Force | Out-Null
         Copy-Item -Path (Join-Path $raiz '*') -Destination $destino -Recurse -Force
 
+        # el ZIP v1.0.0 trae dos manifiestos identicos (mismo ClientId); dejar solo uno
+        $dup = Join-Path $destino 'revit-mcp.addin'
+        $ppal = Join-Path $destino 'mcp-servers-for-revit.addin'
+        if ((Test-Path $dup) -and (Test-Path $ppal)) {
+            Remove-Item $dup -Force -ErrorAction SilentlyContinue
+        }
+
         $addinFinal = @(Get-ChildItem $destino -Filter '*.addin' -File -ErrorAction SilentlyContinue |
                         Where-Object { $_.Name -like '*mcp*' })
         if ($addinFinal.Count -gt 0) {
@@ -246,11 +253,63 @@ else {
     }
 }
 
-# ---------------------------------------------------------------- 4. clientes
-Write-Titulo '4. Registro del servidor MCP en Claude'
+# ---------------------------------------------------------------- 4. servidor
+Write-Titulo '4. Servidor MCP (instalacion local)'
 
-$comando = 'cmd'
-$argsMcp = @('/c', 'npx', '-y', $PaqueteNpm)
+# npx directo se rompe con Node 24: mcp-server-for-revit fija better-sqlite3 11.x,
+# que no trae binario precompilado para Node 24 e intenta compilar desde fuente
+# (exige Visual Studio Build Tools). Se instala en una carpeta propia con un
+# override a better-sqlite3 12.x, que si trae binarios para Node 20/22/24.
+$dirServidor   = Join-Path $env:LOCALAPPDATA 'revit-mcp-server'
+$entryServidor = Join-Path $dirServidor 'node_modules\mcp-server-for-revit\build\index.js'
+$servidorListo = Test-Path $entryServidor
+
+if ($SoloVerificar) {
+    if ($servidorListo) { Write-Ok    "Servidor instalado en $dirServidor" }
+    else                { Write-Aviso 'Servidor MCP local no instalado.' }
+}
+elseif ((Get-NodeMajor) -lt 18) {
+    Write-Falla 'Sin Node.js 18+ no se puede instalar el servidor MCP.'
+}
+else {
+    try {
+        New-Item -ItemType Directory -Path $dirServidor -Force | Out-Null
+        $pkgJson = '{ "name": "revit-mcp-host", "private": true, ' +
+                   '"dependencies": { "mcp-server-for-revit": "1.0.0" }, ' +
+                   '"overrides": { "better-sqlite3": "^12.4.0" } }'
+        Set-Content (Join-Path $dirServidor 'package.json') $pkgJson -Encoding ASCII
+
+        Write-Paso 'Instalando mcp-server-for-revit con npm (~1 min) ...'
+        Push-Location $dirServidor
+        # redirigir DENTRO de cmd: en PS 5.1, 2>&1 sobre npm convierte warnings en excepciones
+        & cmd /c 'npm install --no-audit --no-fund >nul 2>&1'
+        Pop-Location
+
+        if (-not (Test-Path $entryServidor)) { throw 'npm install no dejo build/index.js en su sitio' }
+
+        # comprobar que el modulo nativo carga (el fallo tipico de version de Node)
+        $rutaJs = ($dirServidor -replace '\\', '/') + '/node_modules/better-sqlite3'
+        $test = & node -e "try{require('$rutaJs');console.log('OK')}catch(e){console.log('FALLO: '+e.message)}"
+        if ("$test" -match '^OK') {
+            $servidorListo = $true
+            Write-Ok "Servidor MCP instalado y verificado en $dirServidor"
+        } else {
+            throw "el modulo nativo better-sqlite3 no carga -> $test"
+        }
+    } catch {
+        Write-Falla "Instalacion del servidor MCP fallida -> $($_.Exception.Message)"
+    }
+}
+
+# ---------------------------------------------------------------- 5. clientes
+Write-Titulo '5. Registro del servidor MCP en Claude'
+
+# ruta absoluta de node.exe: no depender del PATH del proceso de Claude
+Update-PathDeSesion
+$nodeExe = Get-RutaComando 'node'
+if (-not $nodeExe) { $nodeExe = 'node' }
+$comando = $nodeExe
+$argsMcp = @($entryServidor)
 
 # ---- 4a. Claude Code (CLI)
 $claudeCli = Get-RutaComando 'claude'
@@ -263,11 +322,11 @@ elseif ($claudeCli) {
     try {
         $ya = & claude mcp list 2>&1 | Out-String
         if ($ya -match [regex]::Escape($NombreServidor)) {
-            Write-Ok "Claude Code: '$NombreServidor' ya estaba registrado."
-        } else {
-            & claude mcp add $NombreServidor --scope user -- cmd /c npx -y $PaqueteNpm 2>&1 | Out-Null
-            Write-Ok "Claude Code: servidor '$NombreServidor' registrado (scope user)."
+            # re-registrar para que apunte a la instalacion local nueva
+            & claude mcp remove $NombreServidor --scope user 2>&1 | Out-Null
         }
+        & claude mcp add $NombreServidor --scope user -- $comando $entryServidor 2>&1 | Out-Null
+        Write-Ok "Claude Code: servidor '$NombreServidor' registrado (scope user)."
     } catch {
         Write-Aviso "Fallo 'claude mcp add' -> $($_.Exception.Message). Se editara el archivo de config."
         $claudeCli = $null
@@ -292,7 +351,8 @@ elseif (-not $SoloVerificar -and -not $claudeCli) {
         $srv | Add-Member -MemberType NoteProperty -Name command -Value $comando
         $srv | Add-Member -MemberType NoteProperty -Name args    -Value $argsMcp
         $j.mcpServers | Add-Member -MemberType NoteProperty -Name $NombreServidor -Value $srv -Force
-        ($j | ConvertTo-Json -Depth 100) | Set-Content $cfgCode -Encoding UTF8
+        # UTF-8 SIN BOM: el BOM de Set-Content -Encoding UTF8 rompe JSON.parse en Node
+        [IO.File]::WriteAllText($cfgCode, ($j | ConvertTo-Json -Depth 100), (New-Object Text.UTF8Encoding($false)))
         Write-Ok "Claude Code: escrito en $cfgCode (respaldo: .claude.json.bak-revitmcp)"
     } catch {
         Write-Falla "No se pudo escribir la config de Claude Code -> $($_.Exception.Message)"
@@ -339,35 +399,11 @@ else {
         $srvD | Add-Member -MemberType NoteProperty -Name command -Value $comando
         $srvD | Add-Member -MemberType NoteProperty -Name args    -Value $argsMcp
         $d.mcpServers | Add-Member -MemberType NoteProperty -Name $NombreServidor -Value $srvD -Force
-        ($d | ConvertTo-Json -Depth 100) | Set-Content $cfgDesktop -Encoding UTF8
+        # UTF-8 SIN BOM (ver nota en 4a)
+        [IO.File]::WriteAllText($cfgDesktop, ($d | ConvertTo-Json -Depth 100), (New-Object Text.UTF8Encoding($false)))
         Write-Ok "Claude Desktop: escrito en $cfgDesktop"
     } catch {
         Write-Falla "No se pudo escribir la config de Claude Desktop -> $($_.Exception.Message)"
-    }
-}
-
-# ---------------------------------------------------------------- 5. prueba
-Write-Titulo '5. Precarga del servidor MCP'
-
-if ($SoloVerificar -or (Get-NodeMajor) -lt 18) {
-    Write-Paso 'Se omite (modo diagnostico o Node no disponible).'
-} else {
-    # OJO: el servidor MCP se queda escuchando en stdio y NO termina solo.
-    # Se lanza en segundo plano solo para que npx baje el paquete, y se corta.
-    try {
-        Write-Paso "Descargando el paquete npm '$PaqueteNpm' a la cache de npx ..."
-        $job = Start-Job -ScriptBlock {
-            param($pkg)
-            & cmd /c "npx -y $pkg" 2>&1 | Out-Null
-        } -ArgumentList $PaqueteNpm
-
-        $terminado = Wait-Job $job -Timeout 120
-        Stop-Job   $job -ErrorAction SilentlyContinue
-        Remove-Job $job -Force -ErrorAction SilentlyContinue
-
-        Write-Ok 'Paquete npm en cache: el primer arranque dentro de Claude sera rapido.'
-    } catch {
-        Write-Aviso 'No se pudo precargar el paquete npm; Claude lo bajara en el primer uso.'
     }
 }
 
