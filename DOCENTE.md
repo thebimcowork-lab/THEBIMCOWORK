@@ -11,12 +11,12 @@ cd "C:\Users\THE BIM CO-WORK\Desktop\revit-mcp-setup"
 git init
 git add .
 git commit -m "Instalador revit-mcp para el curso MCP + Claude"
-gh repo create arqra/revit-mcp-setup --public --source=. --push
+gh repo create thebimcowork-lab/THEBIMCOWORK --public --source=. --push
 ```
 
-El repo **debe ser público** y la rama **debe llamarse `main`**: el comando de una línea que usan los alumnos apunta a `raw.githubusercontent.com/arqra/revit-mcp-setup/main/install.ps1`.
+El repo **debe ser público** y la rama **debe llamarse `main`**: el comando de una línea que usan los alumnos apunta a `raw.githubusercontent.com/thebimcowork-lab/THEBIMCOWORK/main/install.ps1`.
 
-Si cambias de cuenta o de nombre, hay que reemplazar `arqra/revit-mcp-setup` en tres sitios:
+Si cambias de cuenta o de nombre, hay que reemplazar `thebimcowork-lab/THEBIMCOWORK` en tres sitios:
 `README.md`, `plugins/revit-mcp-cowork/.claude-plugin/plugin.json` y
 `plugins/revit-mcp-cowork/skills/instalar-revit-mcp/SKILL.md`.
 

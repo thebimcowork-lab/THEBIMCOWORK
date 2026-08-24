@@ -1,4 +1,4 @@
-# revit-mcp-setup · Curso MCP + Claude
+# Instalador revit-mcp · Curso MCP + Claude
 
 Instalador de un solo paso para conectar **Claude** con **Autodesk Revit**.
 Al terminar, podrás preguntarle a Claude cosas como *"¿cuántos muros hay en mi modelo?"* y que las responda leyendo tu proyecto abierto.
@@ -40,14 +40,14 @@ No hace falta ser administrador salvo que haya que instalar Node.js.
 Abre **PowerShell** y pega:
 
 ```powershell
-irm https://raw.githubusercontent.com/arqra/revit-mcp-setup/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/thebimcowork-lab/THEBIMCOWORK/main/install.ps1 | iex
 ```
 
 ### Opción B — clonando el repo
 
 ```powershell
-git clone https://github.com/arqra/revit-mcp-setup.git
-cd revit-mcp-setup
+git clone https://github.com/thebimcowork-lab/THEBIMCOWORK.git
+cd THEBIMCOWORK
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
@@ -83,8 +83,8 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 Este repo también es un *marketplace* de plugins de Claude Code. Instálalo para que Claude sepa usar Revit y sepa repararse solo:
 
 ```
-/plugin marketplace add arqra/revit-mcp-setup
-/plugin install revit-mcp-cowork@revit-mcp-setup
+/plugin marketplace add thebimcowork-lab/THEBIMCOWORK
+/plugin install revit-mcp-cowork@thebimcowork
 ```
 
 Trae dos skills:

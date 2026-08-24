@@ -22,24 +22,26 @@ Los cuatro eslabones, en el orden en que hay que verificarlos:
 
 ## Flujo cuando el usuario pide instalar
 
-1. Ejecuta el diagnostico primero. Nunca instales a ciegas:
+1. Ejecuta el diagnostico primero. Nunca instales a ciegas. Si el repo esta clonado en el disco:
 
    ```powershell
-   & "$env:USERPROFILE\Desktop\revit-mcp-setup\install.ps1" -SoloVerificar
+   .\install.ps1 -SoloVerificar
    ```
 
-   Si el repo no esta en el disco, el usuario puede correr el instalador directo desde GitHub:
+   Si no esta clonado, descarga el script a una carpeta temporal y diagnostica desde ahi:
 
    ```powershell
-   irm https://raw.githubusercontent.com/arqra/revit-mcp-setup/main/install.ps1 | iex
+   $s = "$env:TEMP\install-revit-mcp.ps1"
+   irm https://raw.githubusercontent.com/thebimcowork-lab/THEBIMCOWORK/main/install.ps1 -OutFile $s
+   & $s -SoloVerificar
    ```
 
 2. Lee el resumen del diagnostico y explica en espanol claro que falta. No pegues la salida cruda entera.
 
-3. Ejecuta el instalador real solo despues de confirmarlo con el usuario, y avisando que **Revit debe estar cerrado**:
+3. Ejecuta el instalador real solo despues de confirmarlo con el usuario, y avisando que **Revit debe estar cerrado**. Usa el mismo `install.ps1` del paso 1, sin `-SoloVerificar`:
 
    ```powershell
-   & "$env:USERPROFILE\Desktop\revit-mcp-setup\install.ps1"
+   & $s
    ```
 
    Variantes utiles:
