@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "revit-mcp": {
+      "type": "stdio",
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "mcp-server-for-revit"]
+    }
+  }
+}

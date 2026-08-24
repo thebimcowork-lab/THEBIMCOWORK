@@ -1,0 +1,18 @@
+{
+  "name": "revit-mcp-cowork",
+  "version": "1.0.0",
+  "description": "Trae el servidor MCP de Revit (mcp-server-for-revit) a Claude. Expone 25+ herramientas para consultar, crear y modificar elementos del modelo Revit activo, e incluye una skill que instala y diagnostica toda la cadena.",
+  "author": {
+    "name": "Rafael Terrero",
+    "email": "thebimcowork@gmail.com"
+  },
+  "keywords": [
+    "revit",
+    "bim",
+    "autodesk",
+    "mcp",
+    "architecture",
+    "aec"
+  ],
+  "homepage": "https://github.com/thebimcowork/revit-mcp-setup"
+}

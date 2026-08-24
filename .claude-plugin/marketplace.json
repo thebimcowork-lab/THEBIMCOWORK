@@ -1,0 +1,24 @@
+{
+  "name": "revit-mcp-setup",
+  "owner": {
+    "name": "The BIM Co-Work",
+    "email": "thebimcowork@gmail.com"
+  },
+  "metadata": {
+    "description": "Marketplace del curso MCP + Claude de The BIM Co-Work: conecta Claude con Autodesk Revit.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "revit-mcp-cowork",
+      "source": "./plugins/revit-mcp-cowork",
+      "description": "Conecta Claude con el modelo Revit abierto: 25+ herramientas para leer, crear y modificar elementos, mas una skill que instala y diagnostica toda la cadena.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Rafael Terrero",
+        "email": "thebimcowork@gmail.com"
+      },
+      "keywords": ["revit", "bim", "autodesk", "mcp", "aec", "curso"]
+    }
+  ]
+}
