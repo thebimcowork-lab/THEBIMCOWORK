@@ -303,11 +303,11 @@ elseif (-not $SoloVerificar -and -not $claudeCli) {
 $cfgDesktop = Join-Path $env:APPDATA 'Claude\claude_desktop_config.json'
 $hayDesktop = Test-Path (Join-Path $env:APPDATA 'Claude')
 
-if (-not $hayDesktop) {
-    Write-Aviso 'Claude Desktop no parece instalado (no existe %AppData%\Claude). Se omite.'
-}
-elseif ($SoloVerificar) {
-    if (Test-Path $cfgDesktop) {
+if ($SoloVerificar) {
+    if (-not $hayDesktop) {
+        Write-Aviso 'Claude Desktop aun no ha creado su carpeta de datos (no existe %AppData%\Claude).'
+    }
+    elseif (Test-Path $cfgDesktop) {
         $txt = Get-Content $cfgDesktop -Raw -Encoding UTF8
         if ($txt -match [regex]::Escape($PaqueteNpm)) {
             Write-Ok 'Claude Desktop: servidor de Revit ya configurado.'
@@ -319,6 +319,11 @@ elseif ($SoloVerificar) {
     }
 }
 else {
+    # Si Claude Desktop se instalo pero nunca se abrio, la carpeta no existe todavia.
+    # Se crea igual: la config queda lista para el primer arranque.
+    if (-not $hayDesktop) {
+        Write-Paso 'Claude Desktop nunca se ha abierto aqui. Se deja la config lista para el primer arranque.'
+    }
     try {
         if (Test-Path $cfgDesktop) {
             Copy-Item $cfgDesktop "$cfgDesktop.bak-revitmcp" -Force
@@ -347,9 +352,19 @@ Write-Titulo '5. Precarga del servidor MCP'
 if ($SoloVerificar -or (Get-NodeMajor) -lt 18) {
     Write-Paso 'Se omite (modo diagnostico o Node no disponible).'
 } else {
+    # OJO: el servidor MCP se queda escuchando en stdio y NO termina solo.
+    # Se lanza en segundo plano solo para que npx baje el paquete, y se corta.
     try {
         Write-Paso "Descargando el paquete npm '$PaqueteNpm' a la cache de npx ..."
-        & cmd /c "npx -y $PaqueteNpm --help" 2>&1 | Out-Null
+        $job = Start-Job -ScriptBlock {
+            param($pkg)
+            & cmd /c "npx -y $pkg" 2>&1 | Out-Null
+        } -ArgumentList $PaqueteNpm
+
+        $terminado = Wait-Job $job -Timeout 120
+        Stop-Job   $job -ErrorAction SilentlyContinue
+        Remove-Job $job -Force -ErrorAction SilentlyContinue
+
         Write-Ok 'Paquete npm en cache: el primer arranque dentro de Claude sera rapido.'
     } catch {
         Write-Aviso 'No se pudo precargar el paquete npm; Claude lo bajara en el primer uso.'
