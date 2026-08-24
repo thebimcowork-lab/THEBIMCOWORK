@@ -40,13 +40,13 @@ No hace falta ser administrador salvo que haya que instalar Node.js.
 Abre **PowerShell** y pega:
 
 ```powershell
-irm https://raw.githubusercontent.com/thebimcowork/revit-mcp-setup/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/arqra/revit-mcp-setup/main/install.ps1 | iex
 ```
 
 ### Opción B — clonando el repo
 
 ```powershell
-git clone https://github.com/thebimcowork/revit-mcp-setup.git
+git clone https://github.com/arqra/revit-mcp-setup.git
 cd revit-mcp-setup
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
@@ -83,7 +83,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 Este repo también es un *marketplace* de plugins de Claude Code. Instálalo para que Claude sepa usar Revit y sepa repararse solo:
 
 ```
-/plugin marketplace add thebimcowork/revit-mcp-setup
+/plugin marketplace add arqra/revit-mcp-setup
 /plugin install revit-mcp-cowork@revit-mcp-setup
 ```
 

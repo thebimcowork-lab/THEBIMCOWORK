@@ -31,7 +31,7 @@ Los cuatro eslabones, en el orden en que hay que verificarlos:
    Si el repo no esta en el disco, el usuario puede correr el instalador directo desde GitHub:
 
    ```powershell
-   irm https://raw.githubusercontent.com/thebimcowork/revit-mcp-setup/main/install.ps1 | iex
+   irm https://raw.githubusercontent.com/arqra/revit-mcp-setup/main/install.ps1 | iex
    ```
 
 2. Lee el resumen del diagnostico y explica en espanol claro que falta. No pegues la salida cruda entera.
