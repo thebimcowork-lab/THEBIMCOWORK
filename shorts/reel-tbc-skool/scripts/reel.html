@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Reel · Ya abrimos nuestra Skool</title>
+<style>
+  @font-face { font-family: Inter; font-weight: 400; src: url(../.cache/fonts/Inter-400.ttf); }
+  @font-face { font-family: Inter; font-weight: 500; src: url(../.cache/fonts/Inter-500.ttf); }
+  @font-face { font-family: Inter; font-weight: 600; src: url(../.cache/fonts/Inter-600.ttf); }
+  @font-face { font-family: Inter; font-weight: 700; src: url(../.cache/fonts/Inter-700.ttf); }
+  @font-face { font-family: Inter; font-weight: 800; src: url(../.cache/fonts/Inter-800.ttf); }
+  @font-face { font-family: Inter; font-weight: 900; src: url(../.cache/fonts/Inter-900.ttf); }
+  @font-face { font-family: JBM; font-weight: 400; src: url(../.cache/fonts/JetBrainsMono-400.ttf); }
+  @font-face { font-family: JBM; font-weight: 500; src: url(../.cache/fonts/JetBrainsMono-500.ttf); }
+  @font-face { font-family: JBM; font-weight: 700; src: url(../.cache/fonts/JetBrainsMono-700.ttf); }
+
+  :root {
+    --bg: #F5F2EC; --dark: #111111; --cream: #F4EFE6;
+    --fg: #111111; --mid: #4A4A4A; --soft: #8A8682;
+    --line-soft: #D9D5CD; --pink: #ED1B69;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden;
+           background: var(--bg); font-family: Inter, sans-serif; color: var(--fg); }
+  .abs { position: absolute; }
+  .mono { font-family: JBM, monospace; }
+  .eyebrow { font-weight: 700; font-size: 30px; letter-spacing: .18em; text-transform: uppercase;
+             color: var(--pink); white-space: nowrap; }
+  .title { font-weight: 900; letter-spacing: -.045em; line-height: .9; white-space: nowrap; }
+  .line { display: block; overflow: hidden; padding-bottom: .08em; margin-bottom: -.08em; }
+  .line > span { display: block; will-change: transform; }
+  .bar { height: 12px; width: 120px; background: var(--pink); transform-origin: left center; }
+  .dark { color: var(--cream); }
+
+  /* fondos: renders del estudio */
+  .bg { position: absolute; inset: 0; overflow: hidden; }
+  .bg.paper { background: var(--bg); }
+  .bg.paper img { position: absolute; mix-blend-mode: multiply; transform-origin: 70% 100%; }
+  .bg.photo { background: var(--dark); }
+  .bg.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .veil { position: absolute; inset: 0; background: rgba(17, 17, 17, .56); }
+  #bgAxoA img { width: 1340px; right: -300px; bottom: 150px; opacity: .5; }
+  #bgAxoB img { height: 1460px; right: -90px; bottom: 120px; opacity: .36; }
+  #wipe { left: 0; bottom: 0; width: 1080px; height: 0; background: var(--dark); }
+
+  /* lamina (cabecera y pie) */
+  #chrome { position: absolute; inset: 0; pointer-events: none; }
+  #seal { left: 90px; top: 160px; height: 84px; }
+  #counter { right: 90px; top: 186px; font-size: 26px; font-weight: 500; letter-spacing: .08em; }
+  .hair { height: 2px; transform-origin: left center; }
+  #hairTop { left: 90px; top: 280px; width: 900px; }
+  #hairBot { left: 90px; top: 1440px; width: 900px; }
+  #foot { left: 90px; top: 1466px; width: 900px; display: flex; justify-content: space-between;
+          font-size: 24px; letter-spacing: .06em; }
+  .mark { width: 28px; height: 28px; }
+  .mark::before, .mark::after { content: ""; position: absolute; background: currentColor; }
+  .mark::before { left: 13px; top: 0; width: 2px; height: 28px; }
+  .mark::after { top: 13px; left: 0; height: 2px; width: 28px; }
+  #m1 { left: 76px; top: 266px; } #m2 { left: 976px; top: 266px; }
+  #m3 { left: 76px; top: 1426px; } #m4 { left: 976px; top: 1426px; }
+  #chrome.light #counter, #chrome.light #foot { color: var(--soft); }
+  #chrome.light .hair { background: var(--line-soft); }
+  #chrome.light .mark { color: var(--fg); }
+  #chrome.dark #counter, #chrome.dark #foot { color: rgba(244, 239, 230, .75); }
+  #chrome.dark .hair { background: rgba(244, 239, 230, .3); }
+  #chrome.dark .mark { color: var(--cream); }
+
+  /* logos sobre fondo oscuro: Skool en una tinta, sin caja */
+  .skool-mono { filter: brightness(0) invert(.96); }
+  .x { font-weight: 300; color: var(--soft); }
+  .dark .x { color: rgba(244, 239, 230, .7); }
+
+  /* 01 · anuncio (claro) */
+  #s1 .eyebrow { left: 90px; top: 380px; }
+  #s1 .title { left: 82px; top: 446px; font-size: 186px; }
+  #skool1 { left: 90px; top: 1010px; width: 660px; }
+  #s1 .bar { left: 92px; top: 1290px; }
+
+  /* 02 · bienvenida (terraza) */
+  #s2 .eyebrow { left: 90px; top: 380px; }
+  #s2 .title { left: 84px; top: 446px; font-size: 150px; }
+  #lock2Seal { left: 90px; top: 720px; height: 210px; }
+  #lock2X { left: 336px; top: 762px; font-size: 104px; }
+  #lock2Skool { left: 430px; top: 752px; width: 470px; }
+  #s2 .caption { left: 90px; top: 1010px; font-size: 30px; letter-spacing: .02em; color: var(--cream); }
+  #s2 .caption b { color: var(--pink); font-weight: 700; }
+
+  /* 03 · en marcha (claro) */
+  #s3 .eyebrow { left: 90px; top: 380px; }
+  #s3 .title { left: 84px; top: 446px; font-size: 150px; }
+  #s3 .tag { left: 90px; top: 1370px; font-size: 22px; font-weight: 700; letter-spacing: .14em;
+             display: flex; align-items: center; gap: 12px; color: var(--fg); }
+  #s3 .tag i { display: inline-block; width: 14px; height: 14px; background: var(--pink); }
+
+  /* 04 · cierre (fachada) */
+  #s4 .pinkbar { left: 0; top: 0; width: 18px; height: 1920px; background: var(--pink); transform-origin: top center; }
+  #s4 .eyebrow { left: 90px; top: 440px; }
+  #s4 .title { left: 84px; top: 506px; font-size: 186px; }
+  #endSeal { left: 90px; top: 1000px; height: 210px; }
+  #endX { left: 336px; top: 1042px; font-size: 104px; }
+  #endSkool { left: 430px; top: 1032px; width: 470px; }
+  #endUrl { left: 90px; top: 1290px; font-size: 34px; font-weight: 500; letter-spacing: .02em; }
+  #endUrl span { color: var(--pink); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <!-- fondos -->
+  <div id="bgAxoA" class="bg paper"><img src="../assets/renders/axo-vivienda.png" alt=""></div>
+  <div id="bgTerraza" class="bg photo"><img id="terrazaImg" src="../keyframes/terraza_9x16.png" alt=""><div class="veil"></div></div>
+  <div id="bgAxoB" class="bg paper"><img src="../assets/renders/axo-corte.png" alt=""></div>
+  <div id="wipe" class="abs"></div>
+  <div id="bgFachada" class="bg photo"><img id="fachadaImg" src="../keyframes/fachada_9x16.png" alt=""><div class="veil"></div></div>
+
+  <section id="s1" class="abs" style="inset:0">
+    <div class="abs eyebrow">01 · Anuncio</div>
+    <div class="abs title"><span class="line"><span>Ya</span></span><span class="line"><span>abrimos</span></span><span class="line"><span>nuestra</span></span></div>
+    <img id="skool1" class="abs" src="../assets/skool-logo.svg" alt="">
+    <div class="abs bar"></div>
+  </section>
+
+  <section id="s2" class="abs dark" style="inset:0">
+    <div class="abs eyebrow">02 · Bienvenida</div>
+    <div class="abs title fit" data-max="910"><span class="line"><span>Bienvenidos.</span></span></div>
+    <img id="lock2Seal" class="abs" src="../assets/logo-tbc.png" alt="">
+    <div id="lock2X" class="abs x">×</div>
+    <img id="lock2Skool" class="abs skool-mono" src="../assets/skool-logo.svg" alt="">
+    <div class="abs caption mono">Formación BIM + IA <b>→</b> ahora en Skool</div>
+  </section>
+
+  <section id="s3" class="abs" style="inset:0">
+    <div class="abs eyebrow">03 · En marcha</div>
+    <div class="abs title fit" data-max="910"><span class="line"><span>Ya estamos</span></span><span class="line"><span>listos.</span></span></div>
+    <div class="abs tag mono"><i></i>AXO · CORTE 01</div>
+  </section>
+
+  <section id="s4" class="abs dark" style="inset:0">
+    <div class="abs pinkbar"></div>
+    <div class="abs eyebrow">The BIM Co-Work · Skool</div>
+    <div class="abs title"><span class="line"><span>Vamos</span></span><span class="line"><span>con todo.</span></span></div>
+    <img id="endSeal" class="abs" src="../assets/logo-tbc.png" alt="">
+    <div id="endX" class="abs x">×</div>
+    <img id="endSkool" class="abs skool-mono" src="../assets/skool-logo.svg" alt="">
+    <div id="endUrl" class="abs mono"><span>→</span> thebimcowork.cl</div>
+  </section>
+
+  <!-- lamina encima de todo -->
+  <div id="chrome" class="light">
+    <img id="seal" class="abs" src="../assets/logo-tbc.png" alt="">
+    <div id="counter" class="abs mono"><span id="cnum">01</span> / 04</div>
+    <div id="hairTop" class="abs hair"></div>
+    <div id="hairBot" class="abs hair"></div>
+    <div id="m1" class="abs mark"></div><div id="m2" class="abs mark"></div>
+    <div id="m3" class="abs mark"></div><div id="m4" class="abs mark"></div>
+    <div id="foot" class="abs mono"><span>thebimcowork.cl</span><span>SKOOL · 2026</span></div>
+  </div>
+</div>
+
+<script>
+// Linea de tiempo (segundos). render.cjs la exporta a cues.json para el audio.
+const T = {
+  s1: 0.25, s1out: 3.55,
+  s2: 3.95, s2out: 7.45,
+  s3: 7.85,
+  wipe: 11.25, s4: 11.75,
+  end: 15.9,
+};
+const FPS = 30;
+// renders animados en Higgsfield (Kling): cuadros en .cache/<dir>/, desde t0
+const LAYERS = [
+  { id: 'terrazaImg', dir: 'terraza', t0: T.s1out - 0.1 },
+  { id: 'fachadaImg', dir: 'fachada', t0: T.wipe + 0.2 },
+];
+
+const E = {
+  outExpo: p => (p >= 1 ? 1 : 1 - Math.pow(2, -10 * p)),
+  outCubic: p => 1 - Math.pow(1 - p, 3),
+  inOutCubic: p => (p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+  linear: p => p,
+};
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const P = (t, t0, d, e = 'outExpo') => E[e](clamp((t - t0) / d));
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+for (const el of $$('.fit')) {
+  const max = +el.dataset.max;
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  while (el.scrollWidth > max && size > 40) { size -= 2; el.style.fontSize = size + 'px'; }
+}
+
+const cues = [];
+function cue(kind, t) { cues.push({ kind, t: +t.toFixed(3) }); }
+
+function lines(sec, t0, stagger = .1, dur = .8) {
+  $$(`${sec} .line > span`).forEach((el, i) => {
+    const p = P(globalThis.__t, t0 + i * stagger, dur);
+    el.style.transform = `translateY(${(1 - p) * 112}%)`;
+  });
+}
+function rise(el, t0, dur = .7, dist = 46) {
+  const p = P(globalThis.__t, t0, dur);
+  el.style.opacity = clamp((globalThis.__t - t0) / (dur * .5));
+  el.style.transform = `translateY(${(1 - p) * dist}px)`;
+}
+function eyebrow(sec, t0) { rise($(`${sec} .eyebrow`), t0, .6, 24); }
+function section(sec, tin, tout) {
+  const t = globalThis.__t, el = $(sec);
+  el.style.visibility = (t >= tin - .05 && (tout == null || t < tout + .4)) ? 'visible' : 'hidden';
+  if (tout != null) {
+    const q = P(t, tout, .4, 'inOutCubic');
+    el.style.opacity = 1 - q;
+    el.style.transform = `translateY(${-50 * q}px)`;
+  }
+}
+// opacidad de un fondo con fundidos de entrada y salida
+function bg(sel, tin, tout, fade = .5) {
+  const t = globalThis.__t;
+  const a = tin <= 0 ? 1 : P(t, tin, fade, 'inOutCubic');
+  const b = tout == null ? 0 : P(t, tout, fade, 'inOutCubic');
+  const el = $(sel);
+  el.style.opacity = a * (1 - b);
+  el.style.visibility = el.style.opacity > 0 ? 'visible' : 'hidden';
+}
+function kenburns(sel, t0, t1, from = 1.0, to = 1.07) {
+  const p = clamp((globalThis.__t - t0) / (t1 - t0));
+  $(sel).style.transform = `scale(${from + (to - from) * p})`;
+}
+
+function renderAt(t) {
+  globalThis.__t = t;
+  // fondos (renders del estudio)
+  bg('#bgAxoA', 0, T.s1out + .1);
+  kenburns('#bgAxoA img', 0, T.s1out + .6, 1.0, 1.06);
+  bg('#bgTerraza', T.s1out + .1, T.s2out + .1);
+  bg('#bgAxoB', T.s2out + .1, T.wipe + .6, .5);
+  kenburns('#bgAxoB img', T.s2out, T.wipe + .6, 1.0, 1.06);
+  $('#wipe').style.height = `${P(t, T.wipe, .6, 'inOutCubic') * 1920}px`;
+  bg('#bgFachada', T.wipe + .45, null, .7);
+
+  // lamina: clara sobre papel, crema sobre fotos
+  const dark = (t >= T.s1out + .35 && t < T.s2out + .35) || t >= T.wipe + .3;
+  $('#chrome').className = dark ? 'dark' : 'light';
+  $('#seal').style.opacity = P(t, 0, .6);
+  $('#counter').style.opacity = P(t, 0, .6);
+  $('#foot').style.opacity = P(t, .3, .6);
+  for (const m of $$('.mark')) m.style.opacity = P(t, .2, .5);
+  $('#hairTop').style.transform = `scaleX(${P(t, .05, 1.0)})`;
+  $('#hairBot').style.transform = `scaleX(${P(t, .15, 1.0)})`;
+  const n = t < T.s2 - .2 ? 1 : t < T.s3 - .2 ? 2 : t < T.s4 - .2 ? 3 : 4;
+  $('#cnum').textContent = String(n).padStart(2, '0');
+
+  // 01 · Ya abrimos nuestra [skool]
+  section('#s1', 0, T.s1out);
+  eyebrow('#s1', T.s1);
+  lines('#s1', T.s1 + .2, .12);
+  rise($('#skool1'), T.s1 + .95, .8, 70);
+  $('#s1 .bar').style.transform = `scaleX(${P(t, T.s1 + 1.45, .6)})`;
+
+  // 02 · Bienvenidos. + THE BIM CO-WORK × skool sobre la terraza
+  section('#s2', T.s2, T.s2out);
+  eyebrow('#s2', T.s2);
+  lines('#s2', T.s2 + .15);
+  rise($('#lock2Seal'), T.s2 + .7, .7, 30);
+  rise($('#lock2X'), T.s2 + .85, .7, 30);
+  rise($('#lock2Skool'), T.s2 + 1.0, .7, 30);
+  rise($('#s2 .caption'), T.s2 + 1.5, .6, 20);
+
+  // 03 · Ya estamos listos. sobre la axonometria en corte
+  section('#s3', T.s3, T.wipe - .15);
+  eyebrow('#s3', T.s3);
+  lines('#s3', T.s3 + .15);
+  rise($('#s3 .tag'), T.s3 + .9, .6, 12);
+
+  // 04 · Vamos con todo. sobre la fachada
+  section('#s4', T.s4, null);
+  $('#s4 .pinkbar').style.transform = `scaleY(${P(t, T.s4, .8)})`;
+  eyebrow('#s4', T.s4 + .1);
+  lines('#s4', T.s4 + .25, .12, .9);
+  rise($('#endSeal'), T.s4 + 1.0, .7, 30);
+  rise($('#endX'), T.s4 + 1.15, .7, 30);
+  rise($('#endSkool'), T.s4 + 1.3, .7, 30);
+  rise($('#endUrl'), T.s4 + 1.75, .7, 20);
+}
+
+cue('tick', T.s1); cue('reveal', T.s1 + .95); cue('tick', T.s1 + 1.45);
+cue('swoosh', T.s1out);
+cue('tick', T.s2); cue('reveal', T.s2 + .7); cue('tick', T.s2 + 1.5);
+cue('swoosh', T.s2out);
+cue('tick', T.s3); cue('tick', T.s3 + .9);
+cue('wipe', T.wipe);
+cue('tick', T.s4 + .1); cue('bell', T.s4 + .3); cue('reveal', T.s4 + 1.0); cue('tick', T.s4 + 1.75);
+window.CUES = { cues, T, FPS, LAYERS };
+window.renderAt = renderAt;
+renderAt(0);
+</script>
+</body>
+</html>
