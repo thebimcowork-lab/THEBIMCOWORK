@@ -248,6 +248,78 @@ def sparkle(canvas: np.ndarray, x: int, y: int, big: bool = True, color=WHITE) -
     paint(canvas, x - m.shape[1] // 2, y - m.shape[0] // 2, m, color)
 
 
+TBC_CREAM = (245, 242, 236)
+TBC_GREY = [(22, 22, 22), (29, 29, 29), (38, 38, 38), (52, 52, 52)]
+DIAMOND = ["...##...", "..####..", ".######.", "########", "########", ".######.", "..####..",
+           "...##..."]
+
+
+def skyline(canvas: np.ndarray, base: int = GROUND_Y, seed: int = 7) -> None:
+    """Edificios en grises con ventanas: arquitectura en vez de cerros."""
+    rng = np.random.default_rng(seed)
+    x = -4
+    while x < VW:
+        w = int(rng.integers(14, 30))
+        h = int(rng.integers(22, 66))
+        if BLOCK[0] - 10 < x + w / 2 < BLOCK[0] + BLOCK[2] + 10:
+            h = min(h, 34)                         # bajo detras del bloque-logo
+        top = base - h
+        paint(canvas, x, top, np.ones((h, w), bool), TBC_GREY[0])
+        paint(canvas, x, top, np.ones((1, w), bool), TBC_GREY[2])
+        for wy in range(top + 4, base - 4, 5):
+            for wx in range(x + 3, x + w - 3, 4):
+                r = rng.random()
+                color = TBC_CREAM if r < .05 else TBC_PINK if r < .075 else TBC_GREY[1]
+                paint(canvas, wx, wy, np.ones((2, 2), bool), color)
+        if rng.random() < .35:                     # antena
+            ax = x + w // 2
+            paint(canvas, ax, top - 6, np.ones((6, 1), bool), TBC_GREY[2])
+        x += w + int(rng.integers(1, 4))
+
+
+def crane(canvas: np.ndarray, mast_x: int = 160, top: int = 172, base: int = GROUND_Y) -> None:
+    """Grua torre en fucsia (reemplaza el tubo)."""
+    c = TBC_PINK
+    for x in (mast_x, mast_x + 5):
+        paint(canvas, x, top, np.ones((base - top, 1), bool), c)
+    for y in range(top, base - 5, 6):              # celosia en zigzag
+        for k in range(6):
+            paint(canvas, mast_x + (k if (y // 6) % 2 == 0 else 5 - k), y + k, np.ones((1, 1), bool), c)
+    paint(canvas, 126, top, np.ones((1, 54), bool), c)            # pluma
+    paint(canvas, 126, top + 4, np.ones((1, 40), bool), c)
+    for x in range(126, 166, 5):
+        paint(canvas, x, top, np.ones((5, 1), bool), c)
+    paint(canvas, mast_x + 8, top + 1, np.ones((6, 10), bool), TBC_GREY[3])   # contrapeso
+    paint(canvas, mast_x + 2, top - 10, np.ones((10, 1), bool), c)            # mastil superior
+    paint(canvas, 134, top + 5, np.ones((18, 1), bool), TBC_CREAM)            # cable
+    paint(canvas, 132, top + 23, np.ones((3, 5), bool), TBC_CREAM)            # gancho
+
+
+def slab_ground(canvas: np.ndarray, top: int = GROUND_Y) -> None:
+    """Losa: canto crema + filete fucsia y juntas grises."""
+    canvas[top:VH] = TBC_BLACK
+    canvas[top] = TBC_CREAM
+    canvas[top + 1] = TBC_PINK
+    for row, y in enumerate(range(top + 2, VH, 16)):
+        canvas[y + 15:y + 16] = TBC_GREY[1]
+        off = 0 if row % 2 == 0 else 12
+        for x in range(off, VW, 24):
+            canvas[y:min(y + 15, VH), x] = TBC_GREY[1]
+
+
+def world_tbc() -> np.ndarray:
+    """Nivel en paleta The BIM Co-Work: negro, fucsia, crema y grises."""
+    c = np.zeros((VH, VW, 3), dtype=np.uint8)
+    c[:] = TBC_BLACK
+    for y in range(52, GROUND_Y - 6, 20):          # grilla BIM sutil
+        for x in range(10, VW, 20):
+            c[y, x] = TBC_GREY[2]
+    skyline(c)
+    crane(c)
+    slab_ground(c)
+    return c
+
+
 def world(include_pipe: bool = True) -> np.ndarray:
     """Fondo fijo del nivel (sin Claudito ni bloque)."""
     c = np.zeros((VH, VW, 3), dtype=np.uint8)

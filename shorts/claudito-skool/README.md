@@ -1,6 +1,6 @@
 # Short · Claudito abre la Skool
 
-YouTube Short vertical en estética de plataforma 8-bit (estilo 1).
+YouTube Short vertical (estilo 1): juego de plataforma 8-bit en la paleta The BIM Co-Work. Fondo negro, skyline de edificios en grises, grúa fucsia y losa con filete fucsia: menos Mario y más arquitectura.
 9:16 · 1080×1920 · 24 fps · 14,7 s · H.264 + AAC.
 
 → Entrega: [`final/claudito-abre-la-skool.mp4`](final/claudito-abre-la-skool.mp4) · portada: [`final/portada.png`](final/portada.png)
@@ -9,17 +9,24 @@ YouTube Short vertical en estética de plataforma 8-bit (estilo 1).
 
 | # | Tiempo | Plano |
 |---|---|---|
-| 01 | 0,0 – 3,4 s | Claudito camina por el nivel. HUD: `CLAUDITO · ×00 · MUNDO 1-1 · TIEMPO 300`. Se agacha y salta. |
+| 01 | 0,0 – 3,4 s | Claudito camina por el nivel. HUD: `CLAUDITO · ◆×00 · NIVEL TBC-1 · TIEMPO 300`. Se agacha y salta. |
 | 02 | 3,4 s | Golpea desde abajo el bloque = logo **The BIM Co-Work**. |
-| 03 | 3,5 – 7,4 s | Del bloque sale el logo **Skool** con destellos · `1000` puntos · moneda `×01`. Claudito cae y celebra. |
-| 04 | 7,4 – 8,2 s | Cierre en iris sobre Claudito. |
+| 03 | 3,5 – 7,4 s | Del bloque sale el logo **Skool** con destellos blancos y fucsia · `1000` puntos · `◆×01`. Claudito cae y celebra. |
+| 04 | 7,4 – 8,2 s | Cierre en iris fucsia sobre Claudito. |
 | 05 | 8,2 – 14,7 s | Pantalla final: `ABRIMOS NUESTRA` [skool] · `BIENVENIDOS` · `YA ESTAMOS LISTOS` · `✦ ¡VAMOS CON TODO! ✦`. |
 
 ## Cómo se hizo
 
 1. **Fotogramas clave** en pixel art original (lienzo 180×320 escalado ×6) con los logos reales → `scripts/keyframes.py` → `keyframes/`.
 2. **Animación en Higgsfield** · Kling 3.0 Pro · 9:16 · sin audio · fotograma inicial + final.
-3. **Montaje** → `scripts/assemble.py`: recorta pausas, corta en el golpe, estabiliza el bloque, compone el logo Skool nítido saliendo desde detrás del bloque, HUD, iris y pantalla final.
+3. **Montaje** (`scripts/assemble.py`):
+   - Recorta pausas y corta en el golpe.
+   - Recorta a Claudito de cada cuadro de Kling (es lo único naranjo sobre el suelo) y lo monta sobre el nivel en paleta TBC (`world_tbc()` en `common.py`).
+   - El bloque-logo se dibuja nítido y solo sube con el golpe.
+   - Logo Skool saliendo desde detrás del bloque.
+   - HUD, iris y pantalla final.
+
+   Los fotogramas clave de `keyframes/` son las guías originales que recibió Kling (paleta clásica). El fondo final se recompone en paleta TBC sin volver a generar.
 4. **Audio** → `scripts/chiptune.py`: música, fanfarria y efectos 8-bit sintetizados para este short (originales). Música en registro medio, filtrada y por debajo de los efectos (ganancias `MUSIC_*` en `assemble.py`).
 
 ### Generaciones Higgsfield
@@ -31,7 +38,7 @@ YouTube Short vertical en estética de plataforma 8-bit (estilo 1).
 | B (1er intento) · logo sale del bloque | K1 → K2 | 5 s | `abce57e8-b5a2-4f34-a664-228165c72af5` | descartado: Kling deformaba el logo Skool al salir |
 
 Gasto: 8,75 + 8,75 + 7 = **24,5 créditos** (saldo 123,75 → 99,25).
-Media IDs en Higgsfield: K0 `f6f133c3-…` · K1 `a86ca42a-…` · K2 `b1981ea9-…` · K3 `78d0b30a-…` · video final v2 `247cdb12-2fc0-4e14-a416-80e2d575ab04` (v1: `ec124b2e-0d7e-4253-a640-07449f21e34a`).
+Media IDs en Higgsfield: K0 `f6f133c3-…` · K1 `a86ca42a-…` · K2 `b1981ea9-…` · K3 `78d0b30a-…` · video final en paleta TBC `ff5b62fd-048f-4952-90f8-3481ced87ee2` (versiones anteriores: `247cdb12-…`, `ec124b2e-…`).
 
 Por el descarte del primer clip B, el logo Skool no lo dibuja Kling: se compone en postproducción con el wordmark oficial, así sale exacto.
 

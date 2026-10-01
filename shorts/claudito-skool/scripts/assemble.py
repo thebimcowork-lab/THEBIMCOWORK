@@ -3,7 +3,9 @@
 Entradas (renders de Kling 3.0 en Higgsfield; se descargan solos a .cache/clips/):
   clipA_camina_salta.mp4    K0 -> K1  (camina, se agacha, salta, golpea el bloque)
   clipB2_cae_celebra.mp4    K1 -> K3  (cae, aterriza, celebra)
-Encima se compone: logo Skool que sale del bloque, destellos, HUD, iris de cierre,
+De cada cuadro de Kling se recorta a Claudito (por su color) y se monta sobre el nivel en
+paleta The BIM Co-Work (negro, fucsia, crema), con el bloque-logo nitido siguiendo el
+rebote original. Encima: logo Skool que sale del bloque, destellos, HUD, iris de cierre,
 pantalla final y el audio chiptune.
 
 Uso:  python scripts/assemble.py
@@ -17,11 +19,12 @@ import urllib.request
 
 import numpy as np
 from PIL import Image
+from scipy import ndimage
 
 import chiptune as ct
-from common import (ASSETS, BLOCK, CLAWD, CLAWD_UP, GOLD, GOLD_LIGHT, GROUND_Y, ROOT, SCALE,
+from common import (ASSETS, BLOCK, CLAWD, CLAWD_UP, DIAMOND, GROUND_Y, OUTLINE, ROOT, SCALE,
                     SPARKLE_BIG, SPARKLE_SMALL, TBC_BLACK, TBC_PINK, H, W, claudito, skool_logo,
-                    text_image, upscale)
+                    tbc_logo, text_image, upscale, world_tbc)
 
 FPS = 24
 CLIPS = ROOT / ".cache" / "clips"
@@ -52,9 +55,7 @@ BLOCK_TOP = BY * SCALE
 LOGO_W = 660
 
 HOLD_S = 0.45      # pausa con el logo flotando antes del iris
-STABLE_REF = 40    # frame del clip B con el bloque en reposo
-STABLE_FROM = 50   # desde aqui Kling hace oscilar el bloque: se fija con el de STABLE_REF
-PATCH = (378, 880, 712, 1340)  # x0, y0, x1, y1 del parche del bloque (px reales)
+STABLE_FROM = 50   # desde aqui Kling hace oscilar el bloque: se deja quieto en reposo
 IRIS_S = 0.6
 BLACK_S = 0.2
 CARD_S = 6.5
@@ -159,7 +160,8 @@ def analyze():
         "a_frames": len(a_boxes), "b_frames": len(b_boxes), "block_rest_q": rest,
         "hit": hit, "takeoff": takeoff, "still_run": [best[0], best[-1]] if best else None,
         "trim_a": [trim[0], trim[-1]] if trim else None, "b_move": move,
-        "b_last_box_q": b_boxes[-1], "b_claudito_top_min_q": b_top_min, "b_block_tops_q": b_tops,
+        "b_last_box_q": b_boxes[-1], "b_claudito_top_min_q": b_top_min,
+        "a_block_tops_q": a_tops, "b_block_tops_q": b_tops,
     }
 
 
@@ -171,19 +173,8 @@ def pattern(pat, color, k=SCALE):
     return Image.fromarray(a, "RGBA").resize((m.shape[1] * k, m.shape[0] * k), Image.NEAREST)
 
 
-STAR_BIG_W, STAR_BIG_G = pattern(SPARKLE_BIG, WHITE), pattern(SPARKLE_BIG, GOLD)
-STAR_SM_W, STAR_SM_G = pattern(SPARKLE_SMALL, WHITE), pattern(SPARKLE_SMALL, GOLD)
-COIN = [".####.", "##..##", "#.##.#", "#.##.#", "#.##.#", "#.##.#", "##..##", ".####."]
-
-
-def coin_icon(k=4):
-    m = np.array([[c != "." for c in row] for row in COIN])
-    inner = np.array([[c == "." for c in row] for row in COIN]) & ~np.array(
-        [[c == "." and (j in (0, 5)) for j, c in enumerate(row)] for row in COIN])
-    a = np.zeros((*m.shape, 4), np.uint8)
-    a[m] = (*GOLD, 255)
-    a[inner & ~m] = (*GOLD_LIGHT, 255)
-    return Image.fromarray(a, "RGBA").resize((6 * k, 8 * k), Image.NEAREST)
+STAR_BIG_W, STAR_BIG_G = pattern(SPARKLE_BIG, WHITE), pattern(SPARKLE_BIG, TBC_PINK)
+STAR_SM_W, STAR_SM_G = pattern(SPARKLE_SMALL, WHITE), pattern(SPARKLE_SMALL, TBC_PINK)
 
 
 def paste(base: Image.Image, over: Image.Image, x: int, y: int) -> None:
@@ -220,7 +211,7 @@ def txt(s, size, color=WHITE, shadow=None):
 
 # ---------------------------------------------------------------- HUD estilo 8-bit
 _hud = {}
-COIN_HUD = coin_icon()
+GEM_HUD = pattern(DIAMOND, TBC_PINK, 4)
 
 
 def hud(score: int, coins: int, time_left: int) -> Image.Image:
@@ -228,10 +219,10 @@ def hud(score: int, coins: int, time_left: int) -> Image.Image:
     if key not in _hud:
         im = Image.new("RGBA", (W, 260), (0, 0, 0, 0))
         sh = (0, 0, 0)
-        for s, x, y in (("CLAUDITO", 60, 150), (f"{score:06d}", 60, 194), ("MUNDO", 600, 150),
-                        ("1-1", 632, 194), ("TIEMPO", 820, 150), (f"{time_left:03d}", 868, 194)):
+        for s, x, y in (("CLAUDITO", 60, 150), (f"{score:06d}", 60, 194), ("NIVEL", 600, 150),
+                        ("TBC-1", 600, 194), ("TIEMPO", 820, 150), (f"{time_left:03d}", 868, 194)):
             paste(im, txt(s, 32, WHITE, sh), x, y)
-        paste(im, COIN_HUD, 380, 190)
+        paste(im, GEM_HUD, 374, 194)
         paste(im, txt(f"×{coins:02d}", 32, WHITE, sh), 412, 194)
         _hud[key] = im
     return _hud[key]
@@ -293,22 +284,44 @@ def _draw_skool(base: Image.Image, dt: float) -> None:
                 paste(base, star, x - star.width // 2, y - star.height // 2)
 
 
-def feather(w, h, edge=18):
-    ramp_x = np.clip(np.minimum(np.arange(w), np.arange(w)[::-1]) / edge, 0, 1)
-    ramp_y = np.clip(np.minimum(np.arange(h), np.arange(h)[::-1]) / edge, 0, 1)
-    return (ramp_y[:, None] * ramp_x[None, :])[..., None]
+# ---------------------------------------------------------------- nivel en paleta TBC
+WORLD = Image.fromarray(np.asarray(upscale(Image.fromarray(world_tbc(), "RGB"))), "RGB")
+BLOCK_IMG = tbc_logo(BW * SCALE)
+GROUND_PX = GROUND_Y * SCALE
 
 
-PATCH_ALPHA = feather(PATCH[2] - PATCH[0], PATCH[3] - PATCH[1])
+def claudito_mask(frame: np.ndarray):
+    """Claudito es lo unico naranjo sobre el suelo: mascara por color, ojos y boca incluidos."""
+    f = frame[:GROUND_PX].astype(np.int16)
+    r, g, b = f[..., 0], f[..., 1], f[..., 2]
+    core = (r > 110) & (r - g > 35) & (r - b > 50)
+    ys, xs = np.nonzero(core)
+    full_core = np.zeros(frame.shape[:2], bool)
+    full_ring = np.zeros(frame.shape[:2], bool)
+    if len(xs) < 50:
+        return full_core, full_ring
+    y0, y1 = max(0, ys.min() - 12), min(GROUND_PX, ys.max() + 13)
+    x0, x1 = max(0, xs.min() - 12), min(W, xs.max() + 13)
+    sub = ndimage.binary_opening(core[y0:y1, x0:x1], iterations=1)
+    lab, n = ndimage.label(ndimage.binary_closing(sub, iterations=4))
+    if n:
+        sizes = ndimage.sum(np.ones_like(lab), lab, range(1, n + 1))
+        sub = ndimage.binary_fill_holes(lab == int(np.argmax(sizes)) + 1)
+    ring = ndimage.binary_dilation(sub, iterations=3) & ~sub
+    full_core[y0:y1, x0:x1] = sub
+    full_ring[y0:y1, x0:x1] = ring
+    return full_core, full_ring
 
 
-def stabilize(frame: np.ndarray, ref: np.ndarray) -> np.ndarray:
-    """Pega el bloque en reposo (de otro frame del mismo clip) con bordes difuminados."""
-    x0, y0, x1, y1 = PATCH
-    out = frame.copy()
-    region = out[y0:y1, x0:x1].astype(np.float32)
-    out[y0:y1, x0:x1] = (ref[y0:y1, x0:x1] * PATCH_ALPHA + region * (1 - PATCH_ALPHA)).astype(np.uint8)
-    return out
+def compose(frame: np.ndarray, block_top: int) -> Image.Image:
+    """Nivel TBC + bloque nitido a la altura de Kling + Claudito recortado de Kling."""
+    img = WORLD.convert("RGBA")
+    paste(img, BLOCK_IMG, BX * SCALE, block_top)
+    arr = np.asarray(img.convert("RGB")).copy()
+    core, ring = claudito_mask(frame)
+    arr[ring] = OUTLINE
+    arr[core] = frame[core]
+    return Image.fromarray(arr, "RGB").convert("RGBA")
 
 
 # ---------------------------------------------------------------- iris
@@ -457,7 +470,6 @@ def main():
     fetch_clips()
     info = analyze()
     print({k: v for k, v in info.items() if k != "b_block_tops_q"})
-    assert info["b_claudito_top_min_q"] * Q > PATCH[3], "el parche del bloque tocaria a Claudito"
     trim = set(range(info["trim_a"][0], info["trim_a"][1] + 1)) if info["trim_a"] else set()
     seq = [("A", i) for i in range(info["hit"] + 1) if i not in trim]
     seq += [("B", i) for i in range(max(0, info["b_move"] - 1), info["b_frames"])]
@@ -494,11 +506,17 @@ def main():
         coins = 1 if t >= pop_done else 0
         return score, coins, 300 - int(t / 0.4)
 
-    b_tops = info["b_block_tops_q"]
+    tops = {"A": info["a_block_tops_q"], "B": info["b_block_tops_q"]}
 
-    def platform(img: Image.Image, t: float, b_index=None) -> Image.Image:
-        top_q = b_tops[b_index] if b_index is not None else None
-        draw_skool(img, t - t_pop, top_q * Q - 4 if top_q else BLOCK_TOP)
+    def block_top(src: str, i: int) -> int:
+        # el bloque solo sube con el golpe: Kling lo hacia bajar antes del salto y oscilar despues
+        q = tops[src][i]
+        if q is None or (src == "B" and i >= STABLE_FROM):
+            return BLOCK_TOP
+        return min(q * Q - 4, BLOCK_TOP)
+
+    def platform(img: Image.Image, t: float, top: int) -> Image.Image:
+        draw_skool(img, t - t_pop, top)
         paste(img, hud(*state(t)), 0, 0)
         if pop_done <= t < pop_done + 0.7:
             q = (t - pop_done) / 0.7
@@ -507,35 +525,29 @@ def main():
 
     sources = {"A": frames(CLIP_A), "B": frames(CLIP_B)}
     cursor = {"A": -1, "B": -1}
-    last, ref = None, None
     k = 0
     for src, i in seq:
         while cursor[src] < i:
-            last_raw = next(sources[src])
+            raw = next(sources[src])
             cursor[src] += 1
-            if src == "B" and cursor[src] == STABLE_REF:
-                ref = last_raw.copy()
-        if src == "B" and i >= STABLE_FROM:
-            last_raw = stabilize(last_raw, ref)
-        img = Image.fromarray(last_raw, "RGB").convert("RGBA")
-        last, last_b = last_raw, (i if src == "B" else None)
-        enc.stdin.write(np.asarray(platform(img, k / FPS, last_b).convert("RGB")).tobytes())
+        top = block_top(src, i)
+        last = compose(raw, top)
+        enc.stdin.write(np.asarray(platform(last.copy(), k / FPS, top).convert("RGB")).tobytes())
         k += 1
     for g in sources.values():
         g.close()
     for j in range(n_hold + n_iris):
         t = k / FPS
-        img = platform(Image.fromarray(last, "RGB").convert("RGBA"), t, last_b)
-        arr = np.asarray(img.convert("RGB")).copy()
+        arr = np.asarray(platform(last.copy(), t, top).convert("RGB")).copy()
         if j >= n_hold:
             p = (j - n_hold + 1) / n_iris
             radius = 1400 * (1 - p) ** 1.6
-            arr[~iris_mask(*iris_c, radius)] = 0
+            arr[~iris_mask(*iris_c, radius)] = TBC_PINK
         enc.stdin.write(arr.tobytes())
         k += 1
-    black = np.zeros((H, W, 3), np.uint8).tobytes()
+    flash = np.full((H, W, 3), TBC_PINK, np.uint8).tobytes()
     for _ in range(n_black):
-        enc.stdin.write(black)
+        enc.stdin.write(flash)
         k += 1
     for j in range(n_card):
         enc.stdin.write(np.asarray(card_frame(j / FPS).convert("RGB")).tobytes())
