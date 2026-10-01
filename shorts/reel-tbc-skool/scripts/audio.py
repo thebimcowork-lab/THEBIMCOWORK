@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / ".cache"
 SR = 48000
 BPM = 96
+TARGET_RMS_DB = -19.0   # nivel medio de la mezcla (suave, bajo la voz de la plataforma)
 EIGHTH = 60 / BPM / 2
 _NOTE = {"C": 0, "C#": 1, "D": 2, "D#": 3, "E": 4, "F": 5, "F#": 6, "G": 7, "G#": 8,
          "A": 9, "A#": 10, "B": 11}
@@ -163,8 +164,10 @@ def main():
     fade = int(0.8 * SR)
     mix[-fade:] *= np.linspace(1, 0, fade) ** 1.5
     mix[: int(0.02 * SR)] *= np.linspace(0, 1, int(0.02 * SR))
-    peak = np.max(np.abs(mix)) or 1.0
-    mix = np.tanh(mix / peak * 1.1) / np.tanh(1.1) * 0.6
+    # sonoridad media fija (suave): no depende de que efecto tenga el pico mas alto
+    rms = np.sqrt(np.mean(mix ** 2)) or 1.0
+    mix *= 10 ** (TARGET_RMS_DB / 20) / rms
+    mix = np.tanh(mix / 0.9) * 0.9
     pcm = (np.clip(mix, -1, 1) * 32767).astype("<i2")
     with wave.open(str(CACHE / "audio.wav"), "wb") as w:
         w.setnchannels(2)

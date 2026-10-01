@@ -22,23 +22,28 @@ const out = stillsArg ? null : (args[0] || path.join(cache, 'video.mp4'));
   const fontsOk = await page.evaluate(() =>
     ['900 100px Inter', '700 30px Inter', '500 26px JBM'].every(f => document.fonts.check(f)));
   if (!fontsOk) throw new Error('No cargaron las tipografias (Inter / JetBrains Mono)');
-  const { cues, T, FPS } = await page.evaluate(() => window.CUES);
+  const { cues, T, FPS, LAYERS } = await page.evaluate(() => window.CUES);
   fs.mkdirSync(cache, { recursive: true });
   fs.writeFileSync(path.join(cache, 'cues.json'), JSON.stringify({ cues, T, FPS }, null, 1));
 
-  const axoDir = path.join(cache, 'axo');
-  const axo = fs.existsSync(axoDir) ? fs.readdirSync(axoDir).filter(f => f.endsWith('.png')).sort() : [];
+  // renders animados (Kling): un <img> por capa que avanza cuadro a cuadro desde t0
+  const layers = LAYERS.map(l => {
+    const dir = path.join(cache, l.dir);
+    const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => /\.(png|jpg)$/.test(f)).sort() : [];
+    return { ...l, dir, files };
+  });
   const frameAt = async t => {
-    let src = null;
-    if (axo.length && t >= T.axo - 0.2) {
-      const i = Math.min(axo.length - 1, Math.max(0, Math.floor((t - T.axo) * FPS)));
-      src = pathToFileURL(path.join(axoDir, axo[i])).href;
-    }
-    await page.evaluate(async ({ t, src }) => {
-      const img = document.getElementById('axoImg');
-      if (src && img.src !== src) { img.src = src; await img.decode(); }
+    const srcs = layers.filter(l => l.files.length).map(l => {
+      const i = Math.min(l.files.length - 1, Math.max(0, Math.floor((t - l.t0) * FPS)));
+      return { id: l.id, src: pathToFileURL(path.join(l.dir, l.files[i])).href };
+    });
+    await page.evaluate(async ({ t, srcs }) => {
+      for (const { id, src } of srcs) {
+        const img = document.getElementById(id);
+        if (img.src !== src) { img.src = src; await img.decode(); }
+      }
       window.renderAt(t);
-    }, { t, src });
+    }, { t, srcs });
     return page.screenshot({ type: 'png' });
   };
 
